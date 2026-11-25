@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-title" content="KM Bill">
+<title>K M TRADERS - Bill</title>
+<style>
+  @page { size: A4; margin: 10mm; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; font-family: -apple-system, Arial, Helvetica, sans-serif; color: #000; background: #f2f2f2; }
+
+  /* ---------- MOBILE FORM ---------- */
+  .top { background: #000; color: #fff; padding: 14px 16px; padding-top: calc(14px + env(safe-area-inset-top)); }
+  .top .n { font-size: 18px; font-weight: bold; letter-spacing: 0.5px; }
+  .top .s { font-size: 12px; opacity: 0.8; }
+  .app { padding: 12px 12px 120px; max-width: 600px; margin: 0 auto; }
+  .card { background: #fff; border: 1px solid #000; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+  .card h3 { margin: 0 0 10px; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; }
+  label { display: block; font-size: 12px; margin: 8px 0 3px; }
+  input, select, textarea {
+    width: 100%; font-size: 16px; padding: 10px; border: 1px solid #000; border-radius: 6px;
+    background: #fff; color: #000; font-family: inherit; -webkit-appearance: none; appearance: none;
+  }
+  textarea { min-height: 64px; resize: vertical; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .item { border: 1px solid #000; border-radius: 6px; padding: 10px; margin-bottom: 10px; }
+  .ihead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 14px; }
+  .rm { font-size: 13px; padding: 5px 10px; border: 1px solid #000; background: #fff; border-radius: 5px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 6px; margin-top: 6px; }
+  .iamt { text-align: right; margin-top: 8px; font-size: 14px; }
+  .btn { width: 100%; padding: 13px; font-size: 16px; border: 1px solid #000; background: #fff; border-radius: 8px; font-weight: bold; }
+  .btn.dark { background: #000; color: #fff; }
+  .bar {
+    position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 2px solid #000;
+    padding: 10px 12px; padding-bottom: calc(10px + env(safe-area-inset-bottom)); z-index: 20;
+  }
+  .bar .tot { display: flex; justify-content: space-between; font-size: 17px; font-weight: bold; margin-bottom: 8px; }
+  .bar .btns { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 6px; }
+  .bar .btn { padding: 11px 4px; font-size: 15px; }
+
+  /* ---------- PREVIEW OVERLAY ---------- */
+  #overlay { display: none; position: fixed; inset: 0; background: #888; z-index: 50; overflow: auto; padding: 8px; padding-top: calc(60px + env(safe-area-inset-top)); }
+  #overlay.open { display: block; }
+  .ovbar { position: fixed; top: 0; left: 0; right: 0; background: #000; padding: 8px; padding-top: calc(8px + env(safe-area-inset-top)); display: flex; gap: 8px; z-index: 60; }
+  .ovbar .btn { padding: 10px; font-size: 15px; }
+  #billWrap { overflow: hidden; }
+
+  /* ---------- TALLY-STYLE BILL ---------- */
+  #bill { width: 190mm; background: #fff; padding: 6mm; font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #000; transform-origin: top left; }
+  #bill table { width: 100%; border-collapse: collapse; }
+  #bill td, #bill th { border: 1px solid #000; padding: 3px 5px; vertical-align: top; }
+  #bill .title { text-align: center; margin-bottom: 4px; }
+  #bill .t1 { font-size: 15px; font-weight: bold; letter-spacing: 1px; }
+  #bill .t2 { font-size: 10px; }
+  #bill .lbl { font-size: 10px; }
+  #bill .co { font-weight: bold; font-size: 13px; }
+  #bill .b { font-weight: bold; }
+  #bill .r { text-align: right; }
+  #bill .c { text-align: center; }
+  #bill .items th { text-align: center; padding: 4px; border-top: none; }
+  #bill .items td { border-top: none; border-bottom: none; padding: 2px 5px; }
+  #bill .items tr.spacer td { height: 14px; }
+  #bill .items tr.total td { border-top: 1px solid #000; border-bottom: 1px solid #000; font-weight: bold; padding: 4px 5px; }
+  #bill .foot td { border-top: none; }
+
+  @media print {
+    body { background: #fff; }
+    .top, .app, .bar, .ovbar { display: none !important; }
+    #overlay { display: block !important; position: static; padding: 0; overflow: visible; background: #fff; }
+    #billWrap { height: auto !important; overflow: visible; }
+    #bill { transform: none !important; width: 100%; padding: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="n">K M TRADERS</div>
+  <div class="s">Bill Maker</div>
+</div>
+
+<div class="app">
+  <div class="card">
+    <h3>Invoice Details</h3>
+    <div class="two">
+      <div><label>Invoice No.</label><input id="invNo"></div>
+      <div><label>Date</label><input id="invDate" type="date"></div>
+      <div><label>Buyer's Order No.</label><input id="ordNo"></div>
+      <div><label>Order Date</label><input id="ordDate" type="date"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Buyer Details</h3>
+    <label>Buyer Name</label><input id="buyerName" autocapitalize="characters">
+    <label>Address</label><textarea id="buyerAddr"></textarea>
+    <label>Buyer Contact No.</label><input id="buyerContact" type="tel">
+    <div class="two">
+      <div><label>Contact Person</label><input id="cPerson" autocapitalize="characters"></div>
+      <div><label>Contact Number</label><input id="cNumber" type="tel"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Items</h3>
+    <div id="items"></div>
+    <button class="btn" onclick="addItem()">+ Add Item</button>
+  </div>
+
+  <div class="card">
+    <h3>Other Details (optional)</h3>
+    <label>Narration (prints under items)</label><input id="narration">
+    <label>Delivery Note</label><input id="delNote">
+    <label>Mode/Terms of Payment</label><input id="payTerms">
+    <label>Terms of Delivery</label><input id="delTerms">
+  </div>
+</div>
+
+<div class="bar">
+  <div class="tot"><span>Total</span><span id="totalBar">&#8377; 0.00</span></div>
+  <div class="btns">
+    <button class="btn" onclick="newBill()">New Bill</button>
+    <button class="btn" onclick="openPreview()">Preview</button>
+    <button class="btn dark" onclick="savePdf()">Save PDF</button>
+  </div>
+</div>
+
+<div id="overlay">
+  <div class="ovbar">
+    <button class="btn" onclick="closePreview()">&#8592; Back</button>
+    <button class="btn dark" onclick="savePdf()">Save PDF</button>
+  </div>
+  <div id="billWrap"><div id="bill"></div></div>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const FIELDS = ['invNo','invDate','ordNo','ordDate','buyerName','buyerAddr','buyerContact','cPerson','cNumber','narration','delNote','payTerms','delTerms'];
+  const UNITS = ['Nos','Kg','Pcs','Box','Ltr','Mtr','Set','Dozen','Pkt','Bag'];
+  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const KEY = 'kmTradersMobileBill';
+  let items = [];
+
+  const blank = () => ({ d: '', q: '', u: 'Nos', r: '' });
+  const num = v => parseFloat(String(v).replace(/,/g, '')) || 0;
+  const fmt = n => n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const amt = it => Math.round(num(it.q) * num(it.r) * 100) / 100;
+  const esc = s => String(s || '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const filled = it => it.d.trim() || num(it.q) || num(it.r);
+
+  function isoToday() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function showDate(iso) {
+    if (!iso) return '';
+    const p = iso.split('-');
+    return p[2] + '-' + MON[Number(p[1]) - 1] + '-' + p[0];
+  }
+  function nextNo(no) {
+    return no ? no.replace(/(\d+)(?!.*\d)/, m => String(Number(m) + 1).padStart(m.length, '0')) : '';
+  }
+
+  function inWords(amount) {
+    const a = ['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+    const b = ['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+    const two = n => n < 20 ? a[n] : b[Math.floor(n / 10)] + (n % 10 ? ' ' + a[n % 10] : '');
+    const three = n => (n >= 100 ? a[Math.floor(n / 100)] + ' Hundred' + (n % 100 ? ' ' : '') : '') + (n % 100 ? two(n % 100) : '');
+    function conv(n) {
+      if (n === 0) return 'Zero';
+      let s = '';
+      const cr = Math.floor(n / 10000000); n %= 10000000;
+      const lk = Math.floor(n / 100000); n %= 100000;
+      const th = Math.floor(n / 1000); n %= 1000;
+      if (cr) s += conv(cr) + ' Crore ';
+      if (lk) s += two(lk) + ' Lakh ';
+      if (th) s += two(th) + ' Thousand ';
+      if (n) s += three(n);
+      return s.trim();
+    }
+    const rs = Math.floor(amount), ps = Math.round((amount - rs) * 100);
+    return 'Indian Rupees ' + conv(rs) + (ps ? ' and ' + two(ps) + ' Paise' : '') + ' Only';
+  }
+
+  /* ----- items on the form ----- */
+  function renderItems() {
+    const box = $('items');
+    box.innerHTML = '';
+    items.forEach((it, i) => {
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML =
+        '<div class="ihead"><b>Item ' + (i + 1) + '</b><button class="rm">Remove</button></div>' +
+        '<input class="d" placeholder="Item name" autocapitalize="characters">' +
+        '<div class="row3">' +
+          '<input class="q" inputmode="decimal" placeholder="Qty">' +
+          '<select class="u">' + UNITS.map(u => '<option>' + u + '</option>').join('') + '</select>' +
+          '<input class="r" inputmode="decimal" placeholder="Rate &#8377;">' +
+        '</div>' +
+        '<div class="iamt">Amount: <b class="a">&#8377; 0.00</b></div>';
+      div.querySelector('.d').value = it.d;
+      div.querySelector('.q').value = it.q;
+      div.querySelector('.u').value = it.u;
+      div.querySelector('.r').value = it.r;
+      div.querySelector('.d').addEventListener('input', e => { it.d = e.target.value; update(); });
+      div.querySelector('.q').addEventListener('input', e => { it.q = e.target.value; update(); });
+      div.querySelector('.u').addEventListener('change', e => { it.u = e.target.value; update(); });
+      div.querySelector('.r').addEventListener('input', e => { it.r = e.target.value; update(); });
+      div.querySelector('.rm').addEventListener('click', () => {
+        items.splice(i, 1);
+        if (!items.length) items.push(blank());
+        renderItems(); update();
+      });
+      box.appendChild(div);
+    });
+  }
+
+  function addItem() {
+    items.push(blank());
+    renderItems(); update();
+    const all = document.querySelectorAll('#items .d');
+    all[all.length - 1].focus();
+  }
+
+  function update() {
+    let total = 0;
+    document.querySelectorAll('#items .item').forEach((div, i) => {
+      const a = amt(items[i]);
+      div.querySelector('.a').textContent = '\u20B9 ' + fmt(a);
+      total += a;
+    });
+    total = Math.round(total * 100) / 100;
+    $('totalBar').textContent = '\u20B9 ' + fmt(total);
+    save();
+    return total;
+  }
+
+  /* ----- saving on this phone ----- */
+  function save() {
+    try {
+      const s = { items };
+      FIELDS.forEach(f => s[f] = $(f).value);
+      localStorage.setItem(KEY, JSON.stringify(s));
+    } catch (e) {}
+  }
+  function load() {
+    let s = null;
+    try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+    if (s) {
+      FIELDS.forEach(f => { if (s[f] != null) $(f).value = s[f]; });
+      items = (s.items && s.items.length) ? s.items : [blank()];
+    } else {
+      $('invNo').value = 'KM/26-27/005';
+      items = [blank()];
+    }
+    if (!$('invDate').value) $('invDate').value = isoToday();
+    renderItems(); update();
+  }
+
+  function newBill() {
+    if (!confirm('Start a new bill?\nItems will be cleared. Buyer details stay.')) return;
+    $('invNo').value = nextNo($('invNo').value);
+    $('invDate').value = isoToday();
+    ['ordNo','ordDate','narration','delNote','payTerms','delTerms'].forEach(f => $(f).value = '');
+    items = [blank()];
+    renderItems(); update();
+    window.scrollTo(0, 0);
+  }
+
+  /* ----- build the Tally-style bill ----- */
+  function buildBill() {
+    const v = f => esc($(f).value);
+    const total = update();
+    let sl = 0, rows = '';
+    items.filter(filled).forEach(it => {
+      rows += '<tr><td class="c">' + (++sl) + '</td><td class="b">' + esc(it.d) + '</td>' +
+        '<td class="r b">' + esc(it.q) + ' ' + esc(it.u) + '</td>' +
+        '<td class="r">' + fmt(num(it.r)) + '</td><td class="r b">' + fmt(amt(it)) + '</td></tr>';
+    });
+    const narr = $('narration').value.trim()
+      ? '<tr><td></td><td style="font-style:italic;">' + v('narration') + '</td><td></td><td></td><td></td></tr>' : '';
+
+    $('bill').innerHTML =
+      '<div class="title"><div class="t1">INVOICE</div><div class="t2">(ORIGINAL FOR RECIPIENT)</div></div>' +
+      '<table>' +
+        '<tr><td rowspan="2" style="width:50%;"><span class="co">K M TRADERS</span><br>12/334 - A, Noor Mahal, Muttiyara Road,<br>Ramanattukara, Kozhikode, Kerala - 673633<br>Contact: 9605271269</td>' +
+          '<td style="width:25%;"><span class="lbl">Invoice No.</span><br><span class="b">' + v('invNo') + '</span></td>' +
+          '<td style="width:25%;"><span class="lbl">Dated</span><br><span class="b">' + showDate($('invDate').value) + '</span></td></tr>' +
+        '<tr><td><span class="lbl">Buyer\'s Order No.</span><br><span class="b">' + v('ordNo') + '</span></td>' +
+          '<td><span class="lbl">Order Dated</span><br><span class="b">' + showDate($('ordDate').value) + '</span></td></tr>' +
+        '<tr><td rowspan="3"><span class="lbl">Buyer (Bill to)</span><br><span class="co">' + v('buyerName') + '</span><br>' +
+          v('buyerAddr').replace(/\n/g, '<br>') +
+          ($('buyerContact').value.trim() ? '<br>Contact: ' + v('buyerContact') : '') + '</td>' +
+          '<td><span class="lbl">Contact Person</span><br><span class="b">' + v('cPerson') + '</span></td>' +
+          '<td><span class="lbl">Contact Number</span><br><span class="b">' + v('cNumber') + '</span></td></tr>' +
+        '<tr><td><span class="lbl">Delivery Note</span><br>' + v('delNote') + '&nbsp;</td>' +
+          '<td><span class="lbl">Mode/Terms of Payment</span><br>' + v('payTerms') + '&nbsp;</td></tr>' +
+        '<tr><td colspan="2" style="height:36px;"><span class="lbl">Terms of Delivery</span><br>' + v('delTerms') + '</td></tr>' +
+      '</table>' +
+      '<table class="items"><tr>' +
+        '<th style="width:6%;">Sl.</th><th style="width:46%;">Description of Goods</th><th style="width:16%;">Quantity</th>' +
+        '<th style="width:14%;">Rate (&#8377;)</th><th style="width:18%;">Amount (&#8377;)</th></tr>' +
+        rows + narr +
+        '<tr class="spacer"><td></td><td></td><td></td><td></td><td></td></tr>' +
+        '<tr class="total"><td></td><td class="r">Total</td><td></td><td></td><td class="r">&#8377; ' + fmt(total) + '</td></tr>' +
+      '</table>' +
+      '<table class="foot">' +
+        '<tr><td colspan="2"><span class="lbl">Amount Chargeable (in words)</span><span class="lbl" style="float:right;">E. &amp; O.E.</span><br>' +
+          '<span class="b">' + inWords(total) + '</span></td></tr>' +
+        '<tr><td style="width:50%; height:85px; position:relative;"><div style="position:absolute; bottom:4px; left:5px;">Received by</div></td>' +
+          '<td style="width:50%; height:85px; text-align:right; position:relative;"><span class="b">for K M TRADERS</span>' +
+          '<div style="position:absolute; bottom:4px; right:5px;">Authorised Signatory</div></td></tr>' +
+      '</table>';
+  }
+
+  function fitPreview() {
+    const bill = $('bill'), wrap = $('billWrap');
+    bill.style.transform = 'none';
+    const scale = Math.min(1, (window.innerWidth - 16) / bill.offsetWidth);
+    bill.style.transform = 'scale(' + scale + ')';
+    wrap.style.height = (bill.offsetHeight * scale) + 'px';
+  }
+
+  function openPreview() {
+    buildBill();
+    $('overlay').classList.add('open');
+    fitPreview();
+  }
+  function closePreview() { $('overlay').classList.remove('open'); }
+
+  function savePdf() {
+    if (!items.some(filled)) { alert('Please add at least one item.'); return; }
+    buildBill();
+    document.title = ($('invNo').value || 'Invoice').replace(/[\/\\:*?"<>|]/g, '-');
+    setTimeout(() => window.print(), 100);
+  }
+
+  window.addEventListener('beforeprint', buildBill);
+  window.addEventListener('afterprint', () => { document.title = 'K M TRADERS - Bill'; });
+  window.addEventListener('resize', () => { if ($('overlay').classList.contains('open')) fitPreview(); });
+  FIELDS.forEach(f => $(f).addEventListener('input', save));
+
+  load();
+</script>
+</body>
+</html>
